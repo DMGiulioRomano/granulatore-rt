@@ -1,0 +1,8 @@
+.DS_Store
+*.scsyndef
+*.wav
+*.aif
+*.aiff
+tests/**/output/
+__pycache__/
+.venv/

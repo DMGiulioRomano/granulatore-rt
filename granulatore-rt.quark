@@ -1,0 +1,9 @@
+(
+	name: "granulatore-rt",
+	summary: "Granulatore in tempo reale e interattivo: microfono in un buffer circolare, parametri da envelope, controlli dal vivo e feature.",
+	author: "DMGiulioRomano",
+	license: "Unlicense",
+	version: "0.0.0",
+	url: "https://github.com/DMGiulioRomano/granulatore-rt",
+	dependencies: []
+)

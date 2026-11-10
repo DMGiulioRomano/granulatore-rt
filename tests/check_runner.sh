@@ -5,6 +5,8 @@
 # una classe rotta nell'albero del quark romperebbe ogni compilazione.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
+# scadenza per caso: un runner rotto si blocca, non deve tenere fermo il meta-test per 120 s
+export TIMEOUT=${TIMEOUT:-30}
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 falliti=0
@@ -69,9 +71,20 @@ FixtureTest : UnitTest {
 	test_infinito { while { true } { } }
 }
 EOF
-TIMEOUT=5; export TIMEOUT
+scadenza=$TIMEOUT
+TIMEOUT=5
 verifica "un test che non ritorna esce con errore entro la scadenza" "$TMP/infinito" "!0" "scadenza di 5 s"
-unset TIMEOUT
+TIMEOUT=$scadenza
+
+# guardia sul comportamento di sclang: oggi esce da solo con 1 se la libreria non compila
+fixture rotto <<'EOF'
+FixtureTest : UnitTest {
+	test_mai { this.assert(true, "mai")
+}
+EOF
+verifica "una classe che non compila esce con errore" "$TMP/rotto" "!0" "Library has not been compiled successfully"
+
+verifica "una cartella inesistente è un errore d'uso (2)" "$TMP/non-esiste" 2 "non esiste"
 
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

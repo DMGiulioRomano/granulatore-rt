@@ -1,8 +1,16 @@
 // Runner headless dei UnitTest di una cartella. Si lancia con tests/run.sh.
 (
 var cartella = thisProcess.argv[0];
-var dir = File.realpath(cartella);
-var classes = UnitTest.allSubclasses.select { |c|
+var dir, classes;
+
+if(cartella.isNil or: { File.type(cartella) != \directory }) {
+	"ERRORE: la cartella dei test % non esiste".format(cartella ? "(mancante)").postln;
+	2.exit;
+	// exit chiude il processo solo dopo che l'interprete è tornato: nessun codice dopo
+	^nil
+};
+dir = File.realpath(cartella);
+classes = UnitTest.allSubclasses.select { |c|
 	// tutti e due i lati risolti: filenameSymbol tiene il path come è stato passato
 	File.realpath(c.filenameSymbol.asString).beginsWith(dir +/+ "")
 }.sort { |a, b| a.name < b.name };

@@ -21,8 +21,15 @@ GrtParam {
 	prCentro { |t|
 		^case
 		{ control.isNil } { this.prLeggi(base, t) }
-		{ base.isNil } { control.value }
-		{ this.prLeggi(base, t) + (depth * (control.value - 0.5)) }
+		{ base.isNil } { this.prControllo }
+		{ this.prLeggi(base, t) + (depth * (this.prControllo - 0.5)) }
+	}
+
+	// un controllo che non dà un numero (bus non ancora scritto, OSC sbagliato) vale 0,5,
+	// il neutro: il parametro torna alla base invece di diventare NaN
+	prControllo {
+		var c = control.value;
+		^if(c.isNaN) { clamps = clamps + 1; 0.5 } { c }
 	}
 
 	prLimita { |x|

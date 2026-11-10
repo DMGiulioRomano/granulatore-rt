@@ -46,4 +46,13 @@ TestGrtParam : UnitTest {
 		p.value(0);
 		this.assertEquals(p.clamps, 2, "nei limiti nessun clamp");
 	}
+
+	// un bus non ancora scritto o un messaggio OSC sbagliato: il parametro torna alla base
+	test_controllo_nan_vale_neutro_e_si_conta {
+		var modulato = GrtParam(base: 1000, control: { 0/0 }, depth: 400);
+		var solo = GrtParam(control: { 0/0 });
+		this.assertEquals(modulato.value(0), 1000, "NaN vale 0,5: la base");
+		this.assertEquals(solo.value(0), 0.5, "da solo vale 0,5");
+		this.assert(modulato.clamps == 1 and: { solo.clamps == 1 }, "il NaN si conta");
+	}
 }

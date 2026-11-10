@@ -63,6 +63,16 @@ TestGrtParam : UnitTest {
 		this.assertEquals(p.clamps, 1, "il nil si conta");
 	}
 
+	// un Env nudo vale come sorgente ovunque, non solo come base
+	test_env_accettato_in_ogni_sorgente {
+		var banda = GrtBand(width: Env([0, 10], [1]), deviation: Env([1, 1], [1]), seed: 1);
+		var onsets = GrtScheduler(Env([10, 10], [1]), Env([0, 0], [1]), seed: 1).onsetsUntil(1);
+		var valori = Array.fill(200, { banda.apply(0, 0.5) });
+		this.assert(valori.every { |x| x.abs <= 2.5 } and: { valori.asSet.size > 1 },
+			"larghezza Env a t = 0,5 vale 5: valori diversi in [-2,5, 2,5]");
+		this.assertArrayFloatEquals(onsets.differentiate.drop(1), 1/10, "densità e distribuzione Env", within: 1e-9);
+	}
+
 	// stesso protocollo value(t) dello scheduler: un GrtParam ne è la densità senza adattatori
 	test_grtparam_come_densita_dello_scheduler {
 		var densita = GrtParam(base: Env([10, 10], [1]));

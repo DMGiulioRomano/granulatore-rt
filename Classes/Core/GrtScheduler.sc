@@ -1,5 +1,5 @@
 // Gli onset di uno stream nel tempo logico, con densità e distribuzione alla Truax.
-// density e distribution rispondono a value(t): un numero, una funzione, un GrtParam.
+// density e distribution: un numero, un Env, una funzione del tempo, un GrtParam.
 GrtScheduler {
 	var density, distribution, silenceStep, next = 0, rng;
 	// quante volte un valore fuori dominio è stato corretto:
@@ -22,7 +22,7 @@ GrtScheduler {
 	onsetsUntil { |t1|
 		var onsets = [];
 		while { next < t1 } {
-			var d = density.value(next);
+			var d = GrtParam.read(density, next);
 			// inf darebbe un intervallo nullo e il cursore non avanzerebbe più
 			if(d == inf) { clamps = clamps + 1 };
 			if(d > 0 and: { d < inf }) {
@@ -40,7 +40,7 @@ GrtScheduler {
 	// Si estrae a ogni onset anche con d = 0: l'i-esima estrazione resta legata all'i-esimo onset.
 	prIntervallo { |t, densita|
 		var media = 1 / densita;
-		var grezza = distribution.value(t);
+		var grezza = GrtParam.read(distribution, t);
 		// fuori da 0..1 gli intervalli possono diventare negativi, con NaN il cursore diventa NaN
 		var d = if(grezza.isNaN) { 0 } { grezza.clip(0, 1) };
 		if(d != grezza) { clamps = clamps + 1 };

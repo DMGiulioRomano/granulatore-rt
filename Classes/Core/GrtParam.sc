@@ -32,9 +32,9 @@ GrtParam {
 
 	prCentro { |t|
 		^case
-		{ control.isNil } { this.prLeggi(base, t) }
+		{ control.isNil } { GrtParam.read(base, t) }
 		{ base.isNil } { this.prControllo }
-		{ this.prLeggi(base, t) + (depth * (this.prControllo - 0.5)) }
+		{ GrtParam.read(base, t) + (depth * (this.prControllo - 0.5)) }
 	}
 
 	// un controllo che non dà un numero (nil, NaN: bus non ancora scritto, OSC sbagliato)
@@ -50,8 +50,10 @@ GrtParam {
 		^limitato
 	}
 
-	// su un Env value(t) restituisce l'Env stesso (lo fa ogni Object): si legge con at(t)
-	prLeggi { |sorgente, t|
+	// Il lettore di ogni sorgente (base qui; larghezza e deviation in GrtBand; densità e
+	// distribuzione in GrtScheduler). Su un Env value(t) restituisce l'Env stesso
+	// (lo fa ogni Object): si legge con at(t).
+	*read { |sorgente, t|
 		^if(sorgente.isKindOf(Env)) { sorgente.at(t) } { sorgente.value(t) }
 	}
 }

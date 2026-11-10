@@ -20,4 +20,22 @@ TestGrtBand : UnitTest {
 		this.assertEquals(deviati.(1), 10000, "deviation 1: sempre");
 		this.assertFloatEquals(deviati.(0.3) / 10000, 0.3, "deviation 0,3: tre volte su dieci", within: 0.02);
 	}
+
+	// la tendency mask che si apre: la larghezza è letta all'onset t
+	test_larghezza_che_cambia_nel_tempo {
+		var b = GrtBand(width: { |t| if(t < 1) { 0 } { 10 } }, seed: 2);
+		var prima = this.estrai(b, 100, 300, 0.5);
+		var dopo = this.estrai(b, 100, 300, 1.5);
+		this.assertEquals(prima.asSet.asArray, [300], "larghezza 0: sempre il centro");
+		this.assert(dopo.every { |x| x >= 295 and: { x <= 305 } } and: { dopo.asSet.size > 1 },
+			"larghezza 10: valori diversi in [295, 305]");
+	}
+
+	test_stesso_seed_stessa_sequenza {
+		var a = this.estrai(GrtBand(200, 0.5, seed: 8), 500);
+		var b = this.estrai(GrtBand(200, 0.5, seed: 8), 500);
+		var c = this.estrai(GrtBand(200, 0.5, seed: 9), 500);
+		this.assertEquals(a, b, "stesso seed, stessa sequenza");
+		this.assert(a != c, "seed diverso, sequenza diversa");
+	}
 }

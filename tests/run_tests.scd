@@ -13,7 +13,12 @@ fork({
 	classes.do { |c|
 		c.setUpClass;
 		c.findTestMethods.do { |m|
-			c.new.runTestMethod(m, false);
+			var t = c.new;
+			// UnitTest non cattura le eccezioni: qui diventano fallimenti, e tearDown gira lo stesso
+			{ t.runTestMethod(m, false) }.try { |e|
+				t.failed(m, e.errorString);
+				{ t.tearDown }.try { |e2| t.failed(m, "tearDown: " ++ e2.errorString) };
+			};
 			metodi = metodi + 1;
 		};
 		c.tearDownClass;

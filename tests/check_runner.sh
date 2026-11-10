@@ -15,17 +15,21 @@ fixture() {
 	cat > "$TMP/$1/Fixture.sc"
 }
 
-# verifica <descrizione> <cartella> <codice atteso, o !0> [testo atteso nell'output]
+# verifica <descrizione> <cartella> <codice atteso, o !0> [testi attesi nell'output...]
 verifica() {
-	out=$("$HERE/run.sh" "$2" 2>&1)
+	descr=$1 cartella=$2 atteso=$3
+	shift 3
+	out=$("$HERE/run.sh" "$cartella" 2>&1)
 	code=$?
-	ok=1
-	if [ "$3" = "!0" ]; then [ "$code" -ne 0 ] || ok=0; else [ "$code" -eq "$3" ] || ok=0; fi
-	if [ $# -ge 4 ] && ! printf '%s\n' "$out" | grep -qF -- "$4"; then ok=0; fi
+	ok=1 mancante=
+	if [ "$atteso" = "!0" ]; then [ "$code" -ne 0 ] || ok=0; else [ "$code" -eq "$atteso" ] || ok=0; fi
+	for testo in "$@"; do
+		printf '%s\n' "$out" | grep -qF -- "$testo" || { ok=0; mancante=$testo; }
+	done
 	if [ $ok -eq 1 ]; then
-		echo "ok      $1"
+		echo "ok      $descr"
 	else
-		echo "FALLITO $1 (uscita $code, attesa $3${4:+, testo atteso: $4})"
+		echo "FALLITO $descr (uscita $code, attesa $atteso${mancante:+, testo mancante: $mancante})"
 		printf '%s\n' "$out" | tail -n 20 | sed 's/^/        | /'
 		falliti=$((falliti + 1))
 	fi
@@ -47,6 +51,17 @@ FixtureTest : UnitTest {
 EOF
 # il conteggio esatto smaschera un filtro che non seleziona nulla (falso verde)
 verifica "tutti verdi: esce con 0 e conta i metodi eseguiti" "$TMP/verde" 0 "metodi 2,"
+
+# UnitTest non cattura le eccezioni: senza il runner la Routine morirebbe senza contarle
+fixture eccezione <<'EOF'
+FixtureTest : UnitTest {
+	tearDown { "TEARDOWN ESEGUITO".postln }
+	test_a_esplode { Error("boom").throw }
+	test_b_dopo { "SECONDO ESEGUITO".postln; this.assert(true, "dopo") }
+}
+EOF
+verifica "un'eccezione è un fallimento, tearDown e test successivi girano" "$TMP/eccezione" 1 \
+	"boom" "TEARDOWN ESEGUITO" "SECONDO ESEGUITO" "metodi 2,"
 
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

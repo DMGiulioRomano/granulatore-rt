@@ -37,7 +37,9 @@ jobs:
       - name: sclang accanto alle risorse
         run: |
           contents=$(dirname "$(dirname "$SCLANG_PATH")")
-          ls "$contents/MacOS" "$contents/MacOS/SCClassLibrary" || true
+          ls -la "$contents/Resources/SCClassLibrary" || true
+          find -L "$contents/Resources/SCClassLibrary" -name Object.sc || true
+          find /tmp/supercollider -name Object.sc -not -path "*/build/build/*" | head || true
           cp "$SCLANG_PATH" "$contents/Resources/sclang"
           echo "SCLANG=$contents/Resources/sclang" >> "$GITHUB_ENV"
         env:

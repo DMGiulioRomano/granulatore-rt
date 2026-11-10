@@ -14,4 +14,4 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 - Meta-test del runner in shell (`tests/check_runner.sh`), con fixture generate in una cartella temporanea.
 - `Makefile` con i target `test`, `test-nrt`, `test-rt`, `test-runner` e `test-all`.
 - CI su GitHub Actions (macos-15, SuperCollider 3.14.1 compilato con `setup-supercollider`) che esegue `make test-all`.
-- Tappa 1, `GrtScheduler`: onset di uno stream nel tempo logico, con densità e distribuzione alla Truax lette all'onset, RNG proprio dello stream, cursore che rende le finestre contigue identiche a un passaggio unico, densità ≤ 0 come silenzio ricontrollato ogni `silenceStep` e distribuzione fuori da 0..1 riportata nei limiti e contata (`clamps`).
+- Tappa 1, `GrtScheduler`: onset di uno stream nel tempo logico, con densità e distribuzione alla Truax lette all'onset, RNG proprio dello stream, cursore che rende le finestre contigue identiche a un passaggio unico, densità ≤ 0 come silenzio ricontrollato ogni `silenceStep`, distribuzione fuori da 0..1 o NaN e densità infinita corrette e contate (`clamps`).

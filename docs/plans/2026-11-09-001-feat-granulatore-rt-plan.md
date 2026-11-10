@@ -58,7 +58,7 @@ Suite, `tests/check_runner.sh` in shell e non `TestGrtRunner` come UnitTest: un 
 - una cartella senza test esce con 0 e lo dichiara;
 - un errore in `setUpClass` è un fallimento e le altre classi girano.
 
-### Tappa 1: lo scheduler degli onset (unit, senza server) (fatta)
+### Tappa 1: lo scheduler degli onset (unit, senza server) (fatta in locale, CI da verificare al primo run)
 
 `GrtScheduler` produce gli onset di uno stream in una finestra di tempo logico `[t0, t1)`, con densità, distribuzione e seed.
 
@@ -68,7 +68,8 @@ Come è stato fatto (`Classes/Core/GrtScheduler.sc`):
 - `density` e `distribution` sono qualunque cosa risponda a `value(t)`: un numero, una funzione e, dalla tappa 2, un `GrtParam`.
 - L'RNG è una `Routine` con il proprio `randSeed`: il `rand` di altro codice non sposta la sequenza dello stream.
 - Densità ≤ 0 vuol dire silenzio: lo scheduler riprova ogni `silenceStep` (10 ms), un passo legato al tempo e non alla finestra.
-- Una distribuzione fuori da 0..1 viene riportata nei limiti e contata in `clamps`.
+- Una distribuzione fuori da 0..1 o NaN viene riportata nei limiti (NaN vale 0) e contata in `clamps`. Una densità infinita (`fill_factor / 0`) vale silenzio ed è contata: altrimenti il cursore non avanzerebbe più. Una densità NaN vale silenzio.
+- Nessun tetto alla densità: una densità finita ma enorme produce comunque troppi onset. Il tetto lo decide la misura sull'M2 Max prima della tappa 8.
 - Il caso sincrono si verifica entro 1e-9 e non "esattamente": gli onset sono somme in virgola mobile.
 - `fill_factor` resta fuori: è una funzione di densità che costruisce chi usa lo scheduler, `{ |t| ff.value(t) / dur.value(t) }`.
 - Effetto della regola "dall'onset successivo": se la densità passa da bassa a alta, lo stream reagisce solo dopo l'intervallo in corso (fino a 10 s a 0,1 grani/s). Se all'ascolto si sente, la correzione è un intervallo massimo.

@@ -12,4 +12,12 @@ TestGrtBand : UnitTest {
 		// gradi di libertà 9, α = 0,01: valore critico 21,67
 		this.assert(chi2 < 21.67, "distribuzione uniforme: chi-quadro % sotto 21,67 (classi %)".format(chi2.round(0.01), classi));
 	}
+
+	// deviation_probability di PGE, qui in 0..1 invece che in 0..100
+	test_deviation_zero_mai_uno_sempre {
+		var deviati = { |p| this.estrai(GrtBand(width: 200, deviation: p, seed: 4), 10000).count { |x| x != 300 } };
+		this.assertEquals(deviati.(0), 0, "deviation 0: la banda non si applica mai");
+		this.assertEquals(deviati.(1), 10000, "deviation 1: sempre");
+		this.assertFloatEquals(deviati.(0.3) / 10000, 0.3, "deviation 0,3: tre volte su dieci", within: 0.02);
+	}
 }

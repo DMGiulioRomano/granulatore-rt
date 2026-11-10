@@ -51,7 +51,24 @@ Prefisso delle classi: `Grt` (per esempio `GrtScheduler`, `GrtLiveBuffer`).
 
 ## Test
 
-Il progetto si sviluppa in TDD. I comandi (`make test`, `make test-nrt`, `make test-rt`) arrivano con la prima tappa del piano.
+Il progetto si sviluppa in TDD.
+
+| comando | cosa esegue |
+|---|---|
+| `make test` | livello 1, `tests/unit/`: logica in sclang, senza server |
+| `make test-nrt` | livello 2, `tests/nrt/`: SynthDef rese in NRT |
+| `make test-rt` | livello 3, `tests/rt/`: server e microfono, verifica manuale |
+| `make test-runner` | meta-test del runner (`tests/check_runner.sh`) |
+| `make test-all` | runner, unit e nrt: il gate prima di commit, push, PR e tag |
+
+Per una cartella qualsiasi: `tests/run.sh <cartella>`. Variabili: `SCLANG` (default `/Applications/SuperCollider.app/Contents/MacOS/sclang`) e `TIMEOUT` in secondi (default 120). Codici d'uscita: 0 verde, 1 fallimenti o classi che non compilano, 2 errore d'uso, 142 scadenza superata.
+
+I test sono sottoclassi di `UnitTest` in file `.sc`. Il runner compila solo `Classes/` e la cartella richiesta, quindi i livelli restano separati.
+
+Due cose dell'ambiente che il runner non controlla:
+
+- sclang esegue sempre lo `startup.scd` dell'utente: se avvia il server o carica altro, i test ne risentono;
+- se il quark è installato anche nell'IDE (`Quarks.install`), le classi di `Classes/` risultano duplicate: va tolto, o escluso con `--exclude-path`.
 
 ## Licenza
 

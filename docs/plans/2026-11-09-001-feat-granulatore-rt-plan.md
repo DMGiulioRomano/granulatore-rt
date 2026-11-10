@@ -33,19 +33,30 @@ Non si portano parser YAML, score writer, renderer offline, cache, visualizer ed
 
 Ogni tappa è una fetta verticale con i propri test rossi.
 
-### Tappa 0: infrastruttura dei test
+### Tappa 0: infrastruttura dei test (fatta)
 
 Il runner headless e i comandi.
 
-- `tests/run_tests.scd`: compila con `--include-path` le cartelle `Classes` e `tests`, esegue i `UnitTest` della cartella richiesta, stampa il riepilogo ed esce con codice 0 o 1.
-- `Makefile` con i target `test` (unit), `test-nrt`, `test-rt`, `test-all`.
-- CI su GitHub Actions con `supriya-project/setup-supercollider` (macOS).
+- `tests/run_tests.scd`: esegue i `UnitTest` della cartella richiesta, stampa il riepilogo ed esce con 0 (verde), 1 (fallimenti) o 2 (errore d'uso). Lo lancia `tests/run.sh`, che compila con `--include-path` solo `Classes` e quella cartella e mette la scadenza.
+- `Makefile` con i target `test` (unit), `test-nrt`, `test-rt`, `test-runner`, `test-all` (runner, unit e nrt).
+- CI su GitHub Actions con `supriya-project/setup-supercollider` (macos-15, `Version-3.14.1`).
 
-Suite proposta, `TestGrtRunner`:
+Cose emerse dalle prove con sclang 3.14.1, che hanno cambiato il design proposto:
 
-- un test volutamente rosso fa uscire `sclang` con codice 1;
-- tolto quel test, l'uscita è 0;
-- un errore di compilazione delle classi fa uscire con codice diverso da 0, non si blocca.
+- UnitTest non cattura le eccezioni dei test: la Routine muore e lo script non arriva a `exit`. Il runner esegue ogni metodo, `setUpClass` e `tearDownClass` dentro un `try`.
+- uno script che non chiama `exit` resta appeso, e un ciclo infinito blocca anche i clock di sclang: la scadenza sta fuori dal processo (`perl -e 'alarm ...'`, perché macOS non ha `timeout`).
+- `make` riduce ogni fallimento a 2: l'invocazione sta in `tests/run.sh`, che restituisce il codice vero.
+
+Suite, `tests/check_runner.sh` in shell e non `TestGrtRunner` come UnitTest: un runner che uscisse sempre con 0 ingoierebbe il fallimento del proprio meta-test. Le fixture si generano in una cartella temporanea.
+
+- un test volutamente rosso fa uscire con 1;
+- tutti verdi: uscita 0, e il riepilogo riporta il numero esatto di metodi (un filtro che non seleziona nulla sarebbe un falso verde);
+- un'eccezione in un test è un fallimento, `tearDown` e i test successivi girano;
+- un test che non ritorna termina con errore entro la scadenza;
+- una classe che non compila fa uscire con errore (guardia: oggi sclang esce da solo con 1);
+- una cartella o un sclang inesistenti danno 2;
+- una cartella senza test esce con 0 e lo dichiara;
+- un errore in `setUpClass` è un fallimento e le altre classi girano.
 
 ### Tappa 1: lo scheduler degli onset (unit, senza server)
 

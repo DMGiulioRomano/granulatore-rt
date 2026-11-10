@@ -33,6 +33,25 @@ TestGrtScheduler : UnitTest {
 		this.assertEquals(onsetsB, onsetsA, "il rand di altro codice non sposta la sequenza dello stream");
 	}
 
+	// la lezione di PGE: l'iteratore deve coincidere con il passaggio unico
+	test_continuita_finestre_spezzate_uguali_al_passaggio_unico {
+		var densita = { |t| 10 + (40 * t) };
+		var unico = GrtScheduler(densita, 1, seed: 5).onsetsUntil(2);
+		var due = GrtScheduler(densita, 1, seed: 5);
+		var tante = GrtScheduler(densita, 1, seed: 5);
+		this.assertEquals(due.onsetsUntil(1) ++ due.onsetsUntil(2), unico, "[0,1) ++ [1,2) == [0,2)");
+		// come una Routine che chiede un blocco di 10 ms alla volta
+		this.assertEquals((1..200).collect { |i| tante.onsetsUntil(i / 100) }.flatten, unico,
+			"200 finestre da 10 ms == [0,2)");
+	}
+
+	test_densita_nuova_vale_dall_onset_successivo {
+		var onsets = GrtScheduler({ |t| if(t < 0.7) { 2 } { 100 } }, 0, seed: 1).onsetsUntil(1.05);
+		this.assertFloatEquals(onsets[1], 0.5, "secondo onset a 0,5");
+		this.assertFloatEquals(onsets[2], 1.0, "l'intervallo nato a 0,5 resta 1/2 anche se a 0,7 la densità cambia");
+		this.assertFloatEquals(onsets[3] - onsets[2], 1/100, "dall'onset 1,0 vale la densità nuova", within: 1e-9);
+	}
+
 	test_seed_diverso_onset_diversi {
 		var a = GrtScheduler(density: 20, distribution: 1, seed: 1).onsetsUntil(5);
 		var b = GrtScheduler(density: 20, distribution: 1, seed: 2).onsetsUntil(5);

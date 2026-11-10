@@ -63,5 +63,15 @@ EOF
 verifica "un'eccezione è un fallimento, tearDown e test successivi girano" "$TMP/eccezione" 1 \
 	"boom" "TEARDOWN ESEGUITO" "SECONDO ESEGUITO" "metodi 2,"
 
+# un ciclo infinito blocca anche i clock di sclang: la scadenza deve stare fuori dal processo
+fixture infinito <<'EOF'
+FixtureTest : UnitTest {
+	test_infinito { while { true } { } }
+}
+EOF
+TIMEOUT=5; export TIMEOUT
+verifica "un test che non ritorna esce con errore entro la scadenza" "$TMP/infinito" "!0" "scadenza di 5 s"
+unset TIMEOUT
+
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

@@ -67,6 +67,21 @@ TestGrtScheduler : UnitTest {
 			"primo onset entro silenceStep (10 ms) dopo 1,003 s: è %".format(onsets.first));
 	}
 
+	// con d > 1 gli intervalli potrebbero essere negativi: onset che tornano indietro
+	test_distribuzione_fuori_limiti_riportata_e_contata {
+		var sopra = GrtScheduler(density: 10, distribution: 1.5, seed: 3);
+		var sotto = GrtScheduler(density: 10, distribution: -0.5, seed: 3);
+		var iotSopra = this.intervalli(sopra.onsetsUntil(20));
+		var iotSotto = this.intervalli(sotto.onsetsUntil(20));
+		var dentro;
+		this.assert(iotSopra.every { |x| x >= 0 and: { x <= (2/10) } }, "1,5 vale 1: intervalli in [0, 2/densità]");
+		this.assertArrayFloatEquals(iotSotto, 1/10, "-0,5 vale 0: intervalli sincroni", within: 1e-9);
+		this.assert(sopra.clamps > 0 and: { sotto.clamps > 0 }, "il clamp si conta, non passa in silenzio");
+		dentro = GrtScheduler(density: 10, distribution: 0.5, seed: 3);
+		dentro.onsetsUntil(20);
+		this.assertEquals(dentro.clamps, 0, "nei limiti nessun clamp");
+	}
+
 	test_seed_diverso_onset_diversi {
 		var a = GrtScheduler(density: 20, distribution: 1, seed: 1).onsetsUntil(5);
 		var b = GrtScheduler(density: 20, distribution: 1, seed: 2).onsetsUntil(5);

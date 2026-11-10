@@ -2,6 +2,7 @@
 // density e distribution rispondono a value(t): un numero, una funzione, un GrtParam.
 GrtScheduler {
 	var density, distribution, silenceStep, next, rng;
+	var <clamps = 0;  // quante volte la distribuzione è stata riportata in 0..1
 
 	*new { |density = 1, distribution = 0, seed, start = 0, silenceStep = 0.01|
 		^super.new.init(density, distribution, seed, start, silenceStep)
@@ -37,7 +38,10 @@ GrtScheduler {
 	// Si estrae a ogni onset anche con d = 0: l'i-esima estrazione resta legata all'i-esimo onset.
 	prIntervallo { |t, densita|
 		var media = 1 / densita;
-		var d = distribution.value(t);
+		var grezza = distribution.value(t);
+		// fuori da 0..1 gli intervalli possono diventare negativi: si riporta nei limiti e si conta
+		var d = grezza.clip(0, 1);
+		if(d != grezza) { clamps = clamps + 1 };
 		^(1 - d) * media + (d * rng.next * 2 * media)
 	}
 }

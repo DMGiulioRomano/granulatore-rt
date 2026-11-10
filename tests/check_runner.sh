@@ -39,5 +39,14 @@ FixtureTest : UnitTest {
 EOF
 verifica "un test rosso fa uscire con 1" "$TMP/rosso" 1 "rosso voluto"
 
+fixture verde <<'EOF'
+FixtureTest : UnitTest {
+	test_uno { this.assert(true, "uno") }
+	test_due { this.assert(true, "due") }
+}
+EOF
+# il conteggio esatto smaschera un filtro che non seleziona nulla (falso verde)
+verifica "tutti verdi: esce con 0 e conta i metodi eseguiti" "$TMP/verde" 0 "metodi 2,"
+
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

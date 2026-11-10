@@ -34,4 +34,16 @@ TestGrtParam : UnitTest {
 		var valori = [0, 0.5, 1].collect { |x| c = x; p.value(0) };
 		this.assertArrayFloatEquals(valori, [800, 1000, 1200], "base + depth · (controllo - 0,5)");
 	}
+
+	test_clamp_dichiarato_e_contato {
+		var c = 1;
+		var p = GrtParam(base: 1000, control: { c }, depth: 4000, min: 20, max: 2000);
+		this.assertEquals(p.value(0), 2000, "3000 riportato al massimo");
+		c = 0;
+		this.assertEquals(p.value(0), 20, "-1000 riportato al minimo");
+		this.assertEquals(p.clamps, 2, "ogni clamp si conta");
+		c = 0.5;
+		p.value(0);
+		this.assertEquals(p.clamps, 2, "nei limiti nessun clamp");
+	}
 }

@@ -9,4 +9,12 @@ TestGrtScheduler : UnitTest {
 		this.assert(onsets.size >= 19, "almeno 19 onset in un secondo a densità 20 (sono %)".format(onsets.size));
 		this.assertArrayFloatEquals(this.intervalli(onsets), 1/20, "intervalli = 1/densità", within: 1e-9);
 	}
+
+	// Truax: intervallo uniforme in [0, 2·media], non esponenziale
+	test_asincrono_intervalli_in_zero_due_su_densita {
+		var iot = this.intervalli(GrtScheduler(density: 10, distribution: 1, seed: 7).onsetsUntil(100));
+		this.assert(iot.size > 500, "abbastanza intervalli (sono %)".format(iot.size));
+		this.assert(iot.every { |x| x >= 0 and: { x <= (2/10) } }, "ogni intervallo in [0, 2/densità]");
+		this.assert(iot.maxItem - iot.minItem > (1/10), "gli intervalli variano davvero");
+	}
 }

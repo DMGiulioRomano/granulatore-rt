@@ -1,4 +1,6 @@
 // Runner headless dei UnitTest di una cartella. Si lancia con tests/run.sh.
+// Esegue le sottoclassi di UnitTest definite sotto la cartella, stampa il riepilogo
+// ed esce con 0 (tutto verde), 1 (fallimenti) o 2 (errore d'uso).
 (
 var cartella = thisProcess.argv[0];
 var dir, classes;
@@ -17,21 +19,32 @@ classes = UnitTest.allSubclasses.select { |c|
 
 fork({
 	var metodi = 0;
+	// un errore in setUpClass o tearDownClass è un fallimento della classe, non un blocco del run
+	var diClasse = { |c, selettore|
+		{ c.perform(selettore); true }.try { |e|
+			c.new.failed(c.class.findRespondingMethodFor(selettore), e.errorString);
+			false
+		}
+	};
+
 	UnitTest.reset;
 	classes.do { |c|
-		c.setUpClass;
-		c.findTestMethods.do { |m|
-			var t = c.new;
-			// UnitTest non cattura le eccezioni: qui diventano fallimenti, e tearDown gira lo stesso
-			{ t.runTestMethod(m, false) }.try { |e|
-				t.failed(m, e.errorString);
-				{ t.tearDown }.try { |e2| t.failed(m, "tearDown: " ++ e2.errorString) };
+		if(diClasse.(c, \setUpClass)) {
+			c.findTestMethods.do { |m|
+				var t = c.new;
+				// UnitTest non cattura le eccezioni: qui diventano fallimenti, e tearDown gira lo stesso
+				{ t.runTestMethod(m, false) }.try { |e|
+					t.failed(m, e.errorString);
+					{ t.tearDown }.try { |e2| t.failed(m, "tearDown: " ++ e2.errorString) };
+				};
+				metodi = metodi + 1;
 			};
-			metodi = metodi + 1;
+			diClasse.(c, \tearDownClass);
 		};
-		c.tearDownClass;
 	};
-	UnitTest.failures.do { |r| Post << "FAIL: "; r.report };
+
+	if(UnitTest.failures.notEmpty) { "\nFALLIMENTI:".postln };
+	UnitTest.failures.do { |r| Post << "  "; r.report(true) };
 	"RIEPILOGO %: classi %, metodi %, asserzioni passate %, fallite %".format(
 		cartella, classes.size, metodi, UnitTest.passes.size, UnitTest.failures.size
 	).postln;

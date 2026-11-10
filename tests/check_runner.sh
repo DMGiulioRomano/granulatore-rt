@@ -90,5 +90,18 @@ verifica "una cartella inesistente è un errore d'uso (2)" "$TMP/non-esiste" 2 "
 mkdir -p "$TMP/vuota"
 verifica "una cartella senza test esce con 0 e lo dichiara" "$TMP/vuota" 0 "NESSUN TEST"
 
+# i test nrt renderanno in setUpClass: un suo errore non deve bloccare il run
+fixture setupclass <<'EOF'
+FixtureATest : UnitTest {
+	*setUpClass { Error("render fallito").throw }
+	test_mai { "A ESEGUITO".postln }
+}
+FixtureBTest : UnitTest {
+	test_b { "B ESEGUITO".postln; this.assert(true, "b") }
+}
+EOF
+verifica "un errore in setUpClass è un fallimento, le altre classi girano" "$TMP/setupclass" 1 \
+	"render fallito" "B ESEGUITO"
+
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

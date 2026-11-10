@@ -86,6 +86,12 @@ verifica "una classe che non compila esce con errore" "$TMP/rotto" "!0" "Library
 
 verifica "una cartella inesistente è un errore d'uso (2)" "$TMP/non-esiste" 2 "non esiste"
 
+# perl con un exec fallito uscirebbe con 0: falso verde
+sclang_vero=${SCLANG:-}
+SCLANG=$TMP/sclang-inesistente; export SCLANG
+verifica "un sclang inesistente è un errore d'uso (2)" "$TMP/verde" 2 "sclang-inesistente"
+if [ -n "$sclang_vero" ]; then SCLANG=$sclang_vero; else unset SCLANG; fi
+
 # tests/nrt e tests/rt restano vuote per alcune tappe: verde, ma dichiarato
 mkdir -p "$TMP/vuota"
 verifica "una cartella senza test esce con 0 e lo dichiara" "$TMP/vuota" 0 "NESSUN TEST"

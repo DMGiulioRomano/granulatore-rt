@@ -5,6 +5,8 @@
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SCLANG=${SCLANG:-/Applications/SuperCollider.app/Contents/MacOS/sclang}
 TIMEOUT=${TIMEOUT:-120}
+# senza questo controllo l'exec fallito di perl uscirebbe con 0: falso verde
+[ -x "$SCLANG" ] || { echo "ERRORE: sclang non trovato in $SCLANG (imposta SCLANG)" >&2; exit 2; }
 # La scadenza sta fuori da sclang: un ciclo infinito blocca anche i suoi clock.
 # perl perché macOS non ha timeout(1); allo scadere SIGALRM chiude sclang (142).
 perl -e 'alarm shift; exec @ARGV' "$TIMEOUT" \

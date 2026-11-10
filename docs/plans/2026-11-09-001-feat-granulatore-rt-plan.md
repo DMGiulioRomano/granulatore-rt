@@ -33,23 +33,46 @@ Non si portano parser YAML, score writer, renderer offline, cache, visualizer ed
 
 Ogni tappa è una fetta verticale con i propri test rossi.
 
-### Tappa 0: infrastruttura dei test
+### Tappa 0: infrastruttura dei test (fatta in locale, CI da verificare al primo run)
 
 Il runner headless e i comandi.
 
-- `tests/run_tests.scd`: compila con `--include-path` le cartelle `Classes` e `tests`, esegue i `UnitTest` della cartella richiesta, stampa il riepilogo ed esce con codice 0 o 1.
-- `Makefile` con i target `test` (unit), `test-nrt`, `test-rt`, `test-all`.
-- CI su GitHub Actions con `supriya-project/setup-supercollider` (macOS).
+- `tests/run_tests.scd`: esegue i `UnitTest` della cartella richiesta, stampa il riepilogo ed esce con 0 (verde), 1 (fallimenti) o 2 (errore d'uso). Lo lancia `tests/run.sh`, che compila con `--include-path` solo `Classes` e quella cartella e mette la scadenza.
+- `Makefile` con i target `test` (unit), `test-nrt`, `test-rt`, `test-runner`, `test-all` (runner, unit e nrt).
+- CI su GitHub Actions con `supriya-project/setup-supercollider` (macos-15, `Version-3.14.1`).
 
-Suite proposta, `TestGrtRunner`:
+Cose emerse dalle prove con sclang 3.14.1, che hanno cambiato il design proposto:
 
-- un test volutamente rosso fa uscire `sclang` con codice 1;
-- tolto quel test, l'uscita è 0;
-- un errore di compilazione delle classi fa uscire con codice diverso da 0, non si blocca.
+- UnitTest non cattura le eccezioni dei test: la Routine muore e lo script non arriva a `exit`. Il runner esegue ogni metodo, `setUpClass` e `tearDownClass` dentro un `try`.
+- uno script che non chiama `exit` resta appeso, e un ciclo infinito blocca anche i clock di sclang: la scadenza sta fuori dal processo (`perl -e 'alarm ...'`, perché macOS non ha `timeout`).
+- `make` riduce ogni fallimento a 2: l'invocazione sta in `tests/run.sh`, che restituisce il codice vero.
 
-### Tappa 1: lo scheduler degli onset (unit, senza server)
+Suite, `tests/check_runner.sh` in shell e non `TestGrtRunner` come UnitTest: un runner che uscisse sempre con 0 ingoierebbe il fallimento del proprio meta-test. Le fixture si generano in una cartella temporanea.
+
+- un test volutamente rosso fa uscire con 1;
+- tutti verdi: uscita 0, e il riepilogo riporta il numero esatto di metodi (un filtro che non seleziona nulla sarebbe un falso verde);
+- un'eccezione in un test è un fallimento, `tearDown` e i test successivi girano;
+- un test che non ritorna termina con errore entro la scadenza;
+- una classe che non compila fa uscire con errore (guardia: oggi sclang esce da solo con 1);
+- una cartella o un sclang inesistenti danno 2;
+- una cartella senza test esce con 0 e lo dichiara;
+- un errore in `setUpClass` è un fallimento e le altre classi girano.
+
+### Tappa 1: lo scheduler degli onset (unit, senza server) (fatta in locale, CI da verificare al primo run)
 
 `GrtScheduler` produce gli onset di uno stream in una finestra di tempo logico `[t0, t1)`, con densità, distribuzione e seed.
+
+Come è stato fatto (`Classes/Core/GrtScheduler.sc`):
+
+- `onsetsUntil(t1)` al posto di una finestra arbitraria: lo scheduler tiene un cursore e lo stato del proprio RNG, così la continuità vale per costruzione. `t0` è implicito, ed è il punto in cui la chiamata precedente si era fermata.
+- `density` e `distribution` sono qualunque cosa risponda a `value(t)`: un numero, una funzione e, dalla tappa 2, un `GrtParam`.
+- L'RNG è una `Routine` con il proprio `randSeed`: il `rand` di altro codice non sposta la sequenza dello stream.
+- Densità ≤ 0 vuol dire silenzio: lo scheduler riprova ogni `silenceStep` (10 ms), un passo legato al tempo e non alla finestra.
+- Una distribuzione fuori da 0..1 o NaN viene riportata nei limiti (NaN vale 0) e contata in `clamps`. Una densità infinita (`fill_factor / 0`) vale silenzio ed è contata: altrimenti il cursore non avanzerebbe più. Una densità NaN vale silenzio.
+- Nessun tetto alla densità: una densità finita ma enorme produce comunque troppi onset. Il tetto lo decide la misura sull'M2 Max prima della tappa 8.
+- Il caso sincrono si verifica entro 1e-9 e non "esattamente": gli onset sono somme in virgola mobile.
+- `fill_factor` resta fuori: è una funzione di densità che costruisce chi usa lo scheduler, `{ |t| ff.value(t) / dur.value(t) }`.
+- Effetto della regola "dall'onset successivo": se la densità passa da bassa a alta, lo stream reagisce solo dopo l'intervallo in corso (fino a 10 s a 0,1 grani/s). Se all'ascolto si sente, la correzione è un intervallo massimo.
 
 Suite proposta, `TestGrtScheduler`:
 
@@ -72,6 +95,16 @@ Suite proposta, `TestGrtParam` e `TestGrtBand`:
 - la combinazione `base + depth * (controllo - 0.5)` resta nei limiti del parametro (clamp dichiarato, non silenzioso);
 - la banda estrae valori dentro `[centro - ampiezza/2, centro + ampiezza/2]`, e la loro distribuzione è uniforme (test chi-quadro con seed fisso);
 - con `deviation_probability` 0 la banda non si applica mai, con 1 sempre.
+
+Come è stato fatto (fatta in locale, CI da verificare al primo run): `Classes/Core/GrtParam.sc`, `GrtBand.sc`, `GrtRng.sc`.
+
+- `GrtParam(base, control, depth, min, max, band, deviation, seed)` risponde a `value(t)`, lo stesso protocollo di `GrtScheduler`: un `GrtParam` è direttamente una densità o una distribuzione.
+- Su un `Env`, `value(t)` restituisce l'oggetto stesso. Tutte le sorgenti (base, larghezza e `deviation` della banda, densità e distribuzione dello scheduler) passano da un solo lettore, `GrtParam.read(sorgente, t)`, che legge un `Env` con `Env.at(t)`: fuori dall'envelope tiene il primo o l'ultimo valore.
+- Il lettore del controllo è qualunque cosa risponda a `value` (nella tappa 6 `{ bus.getSynchronous }`). Da solo dà il valore grezzo; le unità del parametro le darà `GrtMap` (tappa 7). Un controllo che non dà un numero (nil, NaN) vale 0,5, il neutro, e si conta.
+- L'ordine è quello di PGE (`parameter.py:123-146`): centro, gate e banda, poi clamp su `[min, max]`, contato in `clamps`.
+- `deviation` va da 0 a 1 (in PGE da 0 a 100), default 1: la semantica range-only di PGE. Il gate è `rand < p`, quindi sopra 1 vale sempre e sotto 0 o NaN mai, senza clamp.
+- Due estrazioni a ogni chiamata della banda, anche a gate chiuso: l'i-esima resta legata all'i-esimo grano.
+- Restano fuori dalla banda di PGE: forma `gaussian`, ancora `min`, larghezza relativa (`_range_unit`), jitter implicito senza `_range`, `time_mode: normalized`.
 
 ### Tappa 3: vincoli del ritardo di lettura (unit)
 

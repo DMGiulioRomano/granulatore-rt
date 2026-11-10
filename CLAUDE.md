@@ -25,7 +25,7 @@ Granulatore in tempo reale e interattivo in SuperCollider: microfono in un buffe
 
 ## Test gate
 
-Prima di ogni commit, push, PR o tag: tutti i test di livello 1 e 2 devono passare. Finché il runner non esiste (tappa 0 del piano) non c'è codice da testare.
+Prima di ogni commit, push, PR o tag: `make test-all` deve passare (meta-test del runner, livelli 1 e 2). Comandi e codici d'uscita sono nel README, sezione Test.
 
 ## Macchina
 

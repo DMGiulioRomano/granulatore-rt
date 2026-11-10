@@ -4,7 +4,7 @@ Granulatore in tempo reale e interattivo per SuperCollider. Prende il suono dal 
 
 Il modello dei grani viene da [PythonGranularEngine](https://github.com/DMGiulioRomano/PythonGranularEngine) (PGE), che resta un sistema di composizione offline. Il motivo per cui il tempo reale non sta in PGE è spiegato in DMGiulioRomano/PythonGranularEngine#306. Qui non c'è codice Python di PGE: i concetti sono riscritti in SuperCollider.
 
-Stato: progettazione. Il piano è in [docs/plans/](docs/plans/), le decisioni architetturali in [docs/adr/](docs/adr/), il glossario in [CONTEXT.md](CONTEXT.md).
+Stato: in sviluppo, tappe 0 (infrastruttura dei test), 1 (scheduler degli onset) e 2 (parametri e bande) del piano fatte; ancora niente suono. Il piano è in [docs/plans/](docs/plans/), le decisioni architetturali in [docs/adr/](docs/adr/), il glossario in [CONTEXT.md](CONTEXT.md).
 
 ## Architettura in breve
 
@@ -51,7 +51,24 @@ Prefisso delle classi: `Grt` (per esempio `GrtScheduler`, `GrtLiveBuffer`).
 
 ## Test
 
-Il progetto si sviluppa in TDD. I comandi (`make test`, `make test-nrt`, `make test-rt`) arrivano con la prima tappa del piano.
+Il progetto si sviluppa in TDD.
+
+| comando | cosa esegue |
+|---|---|
+| `make test` | livello 1, `tests/unit/`: logica in sclang, senza server |
+| `make test-nrt` | livello 2, `tests/nrt/`: SynthDef rese in NRT |
+| `make test-rt` | livello 3, `tests/rt/`: server e microfono, verifica manuale |
+| `make test-runner` | meta-test del runner (`tests/check_runner.sh`) |
+| `make test-all` | runner, unit e nrt: il gate prima di commit, push, PR e tag |
+
+Per una cartella qualsiasi: `tests/run.sh <cartella>`. Variabili: `SCLANG` (default `/Applications/SuperCollider.app/Contents/MacOS/sclang`) e `TIMEOUT` in secondi (default 120). Codici d'uscita: 0 verde, 1 fallimenti o classi che non compilano, 2 errore d'uso, 142 scadenza superata.
+
+I test sono sottoclassi di `UnitTest` in file `.sc`. Il runner compila solo `Classes/` e la cartella richiesta, quindi i livelli restano separati.
+
+Due cose dell'ambiente che il runner non controlla:
+
+- sclang, all'avvio, esegue lo `startup.scd` dell'utente se esiste: se avvia il server o carica altro, i test possono risentirne (non verificato: oggi sull'M2 Max non c'è);
+- se il quark è installato anche nell'IDE (`Quarks.install`), le classi di `Classes/` risultano duplicate e la compilazione si ferma (`duplicate Class found`, uscita 1): va tolto, o escluso con `--exclude-path`.
 
 ## Licenza
 

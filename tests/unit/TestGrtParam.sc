@@ -55,4 +55,13 @@ TestGrtParam : UnitTest {
 		this.assertEquals(solo.value(0), 0.5, "da solo vale 0,5");
 		this.assert(modulato.clamps == 1 and: { solo.clamps == 1 }, "il NaN si conta");
 	}
+
+	// l'ordine di PGE: centro, gate, banda, poi il clamp di sicurezza
+	test_banda_poi_clamp {
+		var p = GrtParam(base: 0, band: 10, deviation: 1, min: -1, max: 1, seed: 3);
+		var valori = Array.fill(1000, { p.value(0) });
+		this.assert(valori.every { |x| x >= -1 and: { x <= 1 } }, "ogni valore nei limiti");
+		this.assert(valori.asSet.size > 2, "la banda si applica: non solo i due estremi");
+		this.assert(p.clamps > 0, "il clamp dopo la banda si conta");
+	}
 }

@@ -17,4 +17,21 @@ TestGrtParam : UnitTest {
 	test_funzione_del_tempo {
 		this.assertEquals(GrtParam(base: { |t| t * 3 }).value(2), 6, "la funzione riceve t");
 	}
+
+	// il lettore finto sta al posto di { bus.getSynchronous }: nessun server
+	test_solo_controllo_ultimo_valore_del_lettore {
+		var scritto = 0.25;
+		var p = GrtParam(control: { scritto });
+		this.assertEquals(p.value(0), 0.25, "l'ultimo valore scritto");
+		scritto = 0.8;
+		this.assertEquals(p.value(0), 0.8, "segue il lettore quando cambia");
+	}
+
+	// il controllo modula attorno alla base; a 0,5 è neutro
+	test_base_piu_modulazione {
+		var c = 0.5;
+		var p = GrtParam(base: 1000, control: { c }, depth: 400);
+		var valori = [0, 0.5, 1].collect { |x| c = x; p.value(0) };
+		this.assertArrayFloatEquals(valori, [800, 1000, 1200], "base + depth · (controllo - 0,5)");
+	}
 }

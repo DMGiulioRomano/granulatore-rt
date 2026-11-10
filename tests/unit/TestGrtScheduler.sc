@@ -19,8 +19,23 @@ TestGrtScheduler : UnitTest {
 	}
 
 	test_asincrono_media_intervalli_uno_su_densita {
-		var iot = this.intervalli(GrtScheduler(density: 50, distribution: 1, seed: 42).onsetsUntil(200));
-		this.assert(iot.size > 9999, "almeno 10.000 intervalli (sono %)".format(iot.size));
+		// 250 s a densità 50 sono circa 12.500 onset: se ne tengono esattamente 10.000 intervalli
+		var iot = this.intervalli(GrtScheduler(density: 50, distribution: 1, seed: 42).onsetsUntil(250)).keep(10000);
+		this.assert(iot.size == 10000, "10.000 intervalli (sono %)".format(iot.size));
 		this.assertFloatEquals(iot.mean, 1/50, "media entro l'1%", within: 0.01 / 50);
+	}
+
+	test_stesso_seed_stessi_onset_anche_con_altro_rand_in_mezzo {
+		var a = GrtScheduler(density: 20, distribution: 1, seed: 99);
+		var b = GrtScheduler(density: 20, distribution: 1, seed: 99);
+		var onsetsA = a.onsetsUntil(5);
+		var onsetsB = Array.fill(5, { |i| 1000.rand; b.onsetsUntil(i + 1) }).flatten;
+		this.assertEquals(onsetsB, onsetsA, "il rand di altro codice non sposta la sequenza dello stream");
+	}
+
+	test_seed_diverso_onset_diversi {
+		var a = GrtScheduler(density: 20, distribution: 1, seed: 1).onsetsUntil(5);
+		var b = GrtScheduler(density: 20, distribution: 1, seed: 2).onsetsUntil(5);
+		this.assert(a != b, "seed diversi danno onset diversi");
 	}
 }

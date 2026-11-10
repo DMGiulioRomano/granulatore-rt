@@ -4,7 +4,7 @@ Granulatore in tempo reale e interattivo per SuperCollider. Prende il suono dal 
 
 Il modello dei grani viene da [PythonGranularEngine](https://github.com/DMGiulioRomano/PythonGranularEngine) (PGE), che resta un sistema di composizione offline. Il motivo per cui il tempo reale non sta in PGE è spiegato in DMGiulioRomano/PythonGranularEngine#306. Qui non c'è codice Python di PGE: i concetti sono riscritti in SuperCollider.
 
-Stato: in sviluppo, tappe 0 (infrastruttura dei test) e 1 (scheduler degli onset) del piano fatte; ancora niente suono. Il piano è in [docs/plans/](docs/plans/), le decisioni architetturali in [docs/adr/](docs/adr/), il glossario in [CONTEXT.md](CONTEXT.md).
+Stato: in sviluppo, tappe 0 (infrastruttura dei test), 1 (scheduler degli onset) e 2 (parametri e bande) del piano fatte; ancora niente suono. Il piano è in [docs/plans/](docs/plans/), le decisioni architetturali in [docs/adr/](docs/adr/), il glossario in [CONTEXT.md](CONTEXT.md).
 
 ## Architettura in breve
 

@@ -58,6 +58,15 @@ TestGrtScheduler : UnitTest {
 		this.assertEquals(s.onsetsUntil(100), [], "nessun onset in [0, 100)");
 	}
 
+	// un controllo dal vivo che riporta su la densità fa ripartire lo stream entro un passo
+	test_dopo_il_silenzio_riparte_entro_un_passo {
+		// 1,003 non è multiplo di nessun passo plausibile: un passo più lungo di 10 ms si vede
+		var onsets = GrtScheduler({ |t| if(t < 1.003) { 0 } { 10 } }, 0, seed: 1).onsetsUntil(2);
+		this.assert(onsets.notEmpty, "lo stream riparte");
+		this.assert(onsets.first >= 1.003 and: { onsets.first <= (1.003 + 0.01 + 1e-9) },
+			"primo onset entro silenceStep (10 ms) dopo 1,003 s: è %".format(onsets.first));
+	}
+
 	test_seed_diverso_onset_diversi {
 		var a = GrtScheduler(density: 20, distribution: 1, seed: 1).onsetsUntil(5);
 		var b = GrtScheduler(density: 20, distribution: 1, seed: 2).onsetsUntil(5);

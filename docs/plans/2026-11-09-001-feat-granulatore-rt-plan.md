@@ -33,7 +33,7 @@ Non si portano parser YAML, score writer, renderer offline, cache, visualizer ed
 
 Ogni tappa è una fetta verticale con i propri test rossi.
 
-### Tappa 0: infrastruttura dei test (fatta)
+### Tappa 0: infrastruttura dei test (fatta in locale, CI da verificare al primo run)
 
 Il runner headless e i comandi.
 

@@ -51,8 +51,8 @@ FixtureTest : UnitTest {
 	test_due { this.assert(true, "due") }
 }
 EOF
-# il conteggio esatto smaschera un filtro che non seleziona nulla (falso verde)
-verifica "tutti verdi: esce con 0 e conta i metodi eseguiti" "$TMP/verde" 0 "metodi 2,"
+# il conteggio esatto smaschera un filtro che non seleziona nulla (falso verde) o che prende classi di altre cartelle
+verifica "tutti verdi: esce con 0 e conta i metodi eseguiti" "$TMP/verde" 0 "classi 1, metodi 2,"
 
 # UnitTest non cattura le eccezioni: senza il runner la Routine morirebbe senza contarle
 fixture eccezione <<'EOF'

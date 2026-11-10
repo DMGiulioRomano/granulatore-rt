@@ -67,8 +67,8 @@ I test sono sottoclassi di `UnitTest` in file `.sc`. Il runner compila solo `Cla
 
 Due cose dell'ambiente che il runner non controlla:
 
-- sclang esegue sempre lo `startup.scd` dell'utente: se avvia il server o carica altro, i test ne risentono;
-- se il quark è installato anche nell'IDE (`Quarks.install`), le classi di `Classes/` risultano duplicate: va tolto, o escluso con `--exclude-path`.
+- sclang, all'avvio, esegue lo `startup.scd` dell'utente se esiste: se avvia il server o carica altro, i test possono risentirne (non verificato: oggi sull'M2 Max non c'è);
+- se il quark è installato anche nell'IDE (`Quarks.install`), le classi di `Classes/` risultano duplicate e la compilazione si ferma (`duplicate Class found`, uscita 1): va tolto, o escluso con `--exclude-path`.
 
 ## Licenza
 

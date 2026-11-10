@@ -56,6 +56,14 @@ TestGrtParam : UnitTest {
 		this.assert(modulato.clamps == 1 and: { solo.clamps == 1 }, "il NaN si conta");
 	}
 
+	// stesso protocollo value(t) dello scheduler: un GrtParam ne è la densità senza adattatori
+	test_grtparam_come_densita_dello_scheduler {
+		var densita = GrtParam(base: Env([10, 10], [1]));
+		var onsets = GrtScheduler(densita, 0, seed: 1).onsetsUntil(1);
+		this.assert(onsets.size >= 9, "onset generati (sono %)".format(onsets.size));
+		this.assertArrayFloatEquals(onsets.differentiate.drop(1), 1/10, "intervalli 1/10", within: 1e-9);
+	}
+
 	// l'ordine di PGE: centro, gate, banda, poi il clamp di sicurezza
 	test_banda_poi_clamp {
 		var p = GrtParam(base: 0, band: 10, deviation: 1, min: -1, max: 1, seed: 3);

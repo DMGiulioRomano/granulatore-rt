@@ -13,8 +13,7 @@ GrtBand {
 	init { |argWidth, argDeviation, seed|
 		width = argWidth;
 		deviation = argDeviation;
-		rng = Routine { loop { 1.0.rand.yield } };
-		rng.randSeed = seed ?? { 2147483647.rand };
+		rng = GrtRng(seed);
 	}
 
 	// due estrazioni a ogni chiamata, anche a gate chiuso: l'i-esima resta legata all'i-esimo grano.

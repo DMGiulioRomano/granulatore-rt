@@ -14,9 +14,7 @@ GrtScheduler {
 		density = argDensity;
 		distribution = argDistribution;
 		silenceStep = argSilenceStep;
-		// RNG proprio dello stream: una Routine ha il suo stato, che il rand di altro codice non sposta
-		rng = Routine { loop { 1.0.rand.yield } };
-		rng.randSeed = seed ?? { 2147483647.rand };
+		rng = GrtRng(seed);
 	}
 
 	// gli onset in [cursore, t1); il cursore resta sul primo onset da t1 in poi,

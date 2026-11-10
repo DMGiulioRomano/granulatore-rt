@@ -81,6 +81,14 @@ TestGrtParam : UnitTest {
 		this.assertArrayFloatEquals(onsets.differentiate.drop(1), 1/10, "intervalli 1/10", within: 1e-9);
 	}
 
+	test_deviation_e_seed_arrivano_alla_banda {
+		var mai = GrtParam(base: 300, band: 200, deviation: 0, seed: 1);
+		var a = GrtParam(base: 300, band: 200, deviation: 0.5, seed: 6);
+		var b = GrtParam(base: 300, band: 200, deviation: 0.5, seed: 6);
+		this.assert(Array.fill(500, { mai.value(0) }).every(_ == 300), "deviation 0: sempre la base");
+		this.assertEquals(Array.fill(500, { a.value(0) }), Array.fill(500, { b.value(0) }), "stesso seed, stessa sequenza");
+	}
+
 	// l'ordine di PGE: centro, gate, banda, poi il clamp di sicurezza
 	test_banda_poi_clamp {
 		var p = GrtParam(base: 0, band: 10, deviation: 1, min: -1, max: 1, seed: 3);

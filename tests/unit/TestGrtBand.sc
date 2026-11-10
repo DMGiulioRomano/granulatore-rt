@@ -31,6 +31,17 @@ TestGrtBand : UnitTest {
 			"larghezza 10: valori diversi in [295, 305]");
 	}
 
+	// a gate chiuso si estrae lo stesso: dal secondo grano le due sequenze coincidono
+	test_due_estrazioni_anche_a_gate_chiuso {
+		var primo = true;
+		var chiusa = GrtBand(width: 200, deviation: { if(primo) { primo = false; 0 } { 1 } }, seed: 5);
+		var aperta = GrtBand(width: 200, deviation: 1, seed: 5);
+		var a = this.estrai(chiusa, 50);
+		var b = this.estrai(aperta, 50);
+		this.assertEquals(a.first, 300, "il primo grano, a gate chiuso, vale il centro");
+		this.assertEquals(a.drop(1), b.drop(1), "dal secondo grano le sequenze coincidono");
+	}
+
 	test_stesso_seed_stessa_sequenza {
 		var a = this.estrai(GrtBand(200, 0.5, seed: 8), 500);
 		var b = this.estrai(GrtBand(200, 0.5, seed: 8), 500);

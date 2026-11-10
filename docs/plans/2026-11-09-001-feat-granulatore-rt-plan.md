@@ -99,8 +99,8 @@ Suite proposta, `TestGrtParam` e `TestGrtBand`:
 Come è stato fatto (fatta in locale, CI da verificare al primo run): `Classes/Core/GrtParam.sc`, `GrtBand.sc`, `GrtRng.sc`.
 
 - `GrtParam(base, control, depth, min, max, band, deviation, seed)` risponde a `value(t)`, lo stesso protocollo di `GrtScheduler`: un `GrtParam` è direttamente una densità o una distribuzione.
-- Su un `Env`, `value(t)` restituisce l'oggetto stesso: `GrtParam` lo legge con `Env.at(t)`, che fuori dall'envelope tiene il primo o l'ultimo valore.
-- Il lettore del controllo è qualunque cosa risponda a `value` (nella tappa 6 `{ bus.getSynchronous }`). Da solo dà il valore grezzo; le unità del parametro le darà `GrtMap` (tappa 7). Un controllo NaN vale 0,5, il neutro, e si conta.
+- Su un `Env`, `value(t)` restituisce l'oggetto stesso. Tutte le sorgenti (base, larghezza e `deviation` della banda, densità e distribuzione dello scheduler) passano da un solo lettore, `GrtParam.read(sorgente, t)`, che legge un `Env` con `Env.at(t)`: fuori dall'envelope tiene il primo o l'ultimo valore.
+- Il lettore del controllo è qualunque cosa risponda a `value` (nella tappa 6 `{ bus.getSynchronous }`). Da solo dà il valore grezzo; le unità del parametro le darà `GrtMap` (tappa 7). Un controllo che non dà un numero (nil, NaN) vale 0,5, il neutro, e si conta.
 - L'ordine è quello di PGE (`parameter.py:123-146`): centro, gate e banda, poi clamp su `[min, max]`, contato in `clamps`.
 - `deviation` va da 0 a 1 (in PGE da 0 a 100), default 1: la semantica range-only di PGE. Il gate è `rand < p`, quindi sopra 1 vale sempre e sotto 0 o NaN mai, senza clamp.
 - Due estrazioni a ogni chiamata della banda, anche a gate chiuso: l'i-esima resta legata all'i-esimo grano.

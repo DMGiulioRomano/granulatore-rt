@@ -35,6 +35,7 @@ fork({
 	"RIEPILOGO %: classi %, metodi %, asserzioni passate %, fallite %".format(
 		cartella, classes.size, metodi, UnitTest.passes.size, UnitTest.failures.size
 	).postln;
+	if(metodi == 0) { "*** NESSUN TEST in % ***".format(cartella).postln };
 	if(UnitTest.failures.isEmpty) { 0.exit } { 1.exit };
 }, AppClock);
 )

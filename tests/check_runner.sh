@@ -86,5 +86,9 @@ verifica "una classe che non compila esce con errore" "$TMP/rotto" "!0" "Library
 
 verifica "una cartella inesistente è un errore d'uso (2)" "$TMP/non-esiste" 2 "non esiste"
 
+# tests/nrt e tests/rt restano vuote per alcune tappe: verde, ma dichiarato
+mkdir -p "$TMP/vuota"
+verifica "una cartella senza test esce con 0 e lo dichiara" "$TMP/vuota" 0 "NESSUN TEST"
+
 [ $falliti -eq 0 ] && echo "runner: tutti i meta-test passano" || echo "runner: $falliti meta-test falliti"
 [ $falliti -eq 0 ]

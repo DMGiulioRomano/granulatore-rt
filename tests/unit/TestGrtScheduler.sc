@@ -52,6 +52,12 @@ TestGrtScheduler : UnitTest {
 		this.assertFloatEquals(onsets[3] - onsets[2], 1/100, "dall'onset 1,0 vale la densità nuova", within: 1e-9);
 	}
 
+	// se andasse in ciclo infinito, la scadenza di tests/run.sh lo fermerebbe
+	test_densita_zero_nessun_onset {
+		var s = GrtScheduler(density: 0, distribution: 0.5, seed: 1);
+		this.assertEquals(s.onsetsUntil(100), [], "nessun onset in [0, 100)");
+	}
+
 	test_seed_diverso_onset_diversi {
 		var a = GrtScheduler(density: 20, distribution: 1, seed: 1).onsetsUntil(5);
 		var b = GrtScheduler(density: 20, distribution: 1, seed: 2).onsetsUntil(5);

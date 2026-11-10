@@ -56,6 +56,13 @@ TestGrtParam : UnitTest {
 		this.assert(modulato.clamps == 1 and: { solo.clamps == 1 }, "il NaN si conta");
 	}
 
+	// { ~forza } prima che ~forza esista: il lettore dà nil
+	test_controllo_nil_vale_neutro_e_si_conta {
+		var p = GrtParam(base: 1000, control: { nil }, depth: 400);
+		this.assertEquals(p.value(0), 1000, "nil vale 0,5: la base");
+		this.assertEquals(p.clamps, 1, "il nil si conta");
+	}
+
 	// stesso protocollo value(t) dello scheduler: un GrtParam ne è la densità senza adattatori
 	test_grtparam_come_densita_dello_scheduler {
 		var densita = GrtParam(base: Env([10, 10], [1]));

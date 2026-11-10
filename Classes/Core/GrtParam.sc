@@ -37,11 +37,11 @@ GrtParam {
 		{ this.prLeggi(base, t) + (depth * (this.prControllo - 0.5)) }
 	}
 
-	// un controllo che non dà un numero (bus non ancora scritto, OSC sbagliato) vale 0,5,
-	// il neutro: il parametro torna alla base invece di diventare NaN
+	// un controllo che non dà un numero (nil, NaN: bus non ancora scritto, OSC sbagliato)
+	// vale 0,5, il neutro: il parametro torna alla base invece di rompersi
 	prControllo {
 		var c = control.value;
-		^if(c.isNaN) { clamps = clamps + 1; 0.5 } { c }
+		^if(c.isNumber.not or: { c.isNaN }) { clamps = clamps + 1; 0.5 } { c }
 	}
 
 	prLimita { |x|

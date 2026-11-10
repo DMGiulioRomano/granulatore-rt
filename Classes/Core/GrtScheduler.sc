@@ -18,7 +18,8 @@ GrtScheduler {
 		rng.randSeed = seed ?? { 2147483647.rand };
 	}
 
-	// gli onset in [cursore, t1); il cursore avanza fino a t1
+	// gli onset in [cursore, t1); il cursore resta sul primo onset da t1 in poi,
+	// così finestre contigue danno gli stessi onset di un passaggio unico
 	onsetsUntil { |t1|
 		var onsets = [];
 		while { next < t1 } {

@@ -39,6 +39,7 @@ TestGrtScheduler : UnitTest {
 		var unico = GrtScheduler(densita, 1, seed: 5).onsetsUntil(2);
 		var due = GrtScheduler(densita, 1, seed: 5);
 		var tante = GrtScheduler(densita, 1, seed: 5);
+		this.assert(unico.size > 50, "abbastanza onset da confrontare (sono %)".format(unico.size));
 		this.assertEquals(due.onsetsUntil(1) ++ due.onsetsUntil(2), unico, "[0,1) ++ [1,2) == [0,2)");
 		// come una Routine che chiede un blocco di 10 ms alla volta
 		this.assertEquals((1..200).collect { |i| tante.onsetsUntil(i / 100) }.flatten, unico,
@@ -80,6 +81,22 @@ TestGrtScheduler : UnitTest {
 		dentro = GrtScheduler(density: 10, distribution: 0.5, seed: 3);
 		dentro.onsetsUntil(20);
 		this.assertEquals(dentro.clamps, 0, "nei limiti nessun clamp");
+	}
+
+	// un valore dal vivo non finito non deve fermare lo stream né bloccarlo
+	test_distribuzione_nan_vale_zero_e_si_conta {
+		var s = GrtScheduler(density: 10, distribution: { 0/0 }, seed: 1);
+		var primi = s.onsetsUntil(5);
+		this.assertArrayFloatEquals(this.intervalli(primi), 1/10, "NaN vale 0: sincrono", within: 1e-9);
+		this.assert(s.onsetsUntil(10).notEmpty, "lo stream non si spegne");
+		this.assert(s.clamps > 0, "il NaN si conta");
+	}
+
+	// fill_factor / 0 dà inf: intervallo nullo, il cursore non avanzerebbe più
+	test_densita_infinita_silenzio_contato {
+		var s = GrtScheduler(density: inf, distribution: 0, seed: 1);
+		this.assertEquals(s.onsetsUntil(1), [], "nessun onset, e la chiamata ritorna");
+		this.assert(s.clamps > 0, "la densità infinita si conta");
 	}
 
 	test_seed_diverso_onset_diversi {

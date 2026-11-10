@@ -1,18 +1,19 @@
 // Gli onset di uno stream nel tempo logico, con densità e distribuzione alla Truax.
 // density e distribution rispondono a value(t): un numero, una funzione, un GrtParam.
 GrtScheduler {
-	var density, distribution, silenceStep, next, rng;
-	var <clamps = 0;  // quante volte la distribuzione è stata riportata in 0..1
+	var density, distribution, silenceStep, next = 0, rng;
+	// quante volte un valore fuori dominio è stato corretto:
+	// distribuzione fuori da 0..1 o NaN, densità infinita
+	var <clamps = 0;
 
-	*new { |density = 1, distribution = 0, seed, start = 0, silenceStep = 0.01|
-		^super.new.init(density, distribution, seed, start, silenceStep)
+	*new { |density = 1, distribution = 0, seed, silenceStep = 0.01|
+		^super.new.init(density, distribution, seed, silenceStep)
 	}
 
-	init { |argDensity, argDistribution, seed, start, argSilenceStep|
+	init { |argDensity, argDistribution, seed, argSilenceStep|
 		density = argDensity;
 		distribution = argDistribution;
 		silenceStep = argSilenceStep;
-		next = start;
 		// RNG proprio dello stream: una Routine ha il suo stato, che il rand di altro codice non sposta
 		rng = Routine { loop { 1.0.rand.yield } };
 		rng.randSeed = seed ?? { 2147483647.rand };
@@ -24,11 +25,13 @@ GrtScheduler {
 		var onsets = [];
 		while { next < t1 } {
 			var d = density.value(next);
-			if(d > 0) {
+			// inf darebbe un intervallo nullo e il cursore non avanzerebbe più
+			if(d == inf) { clamps = clamps + 1 };
+			if(d > 0 and: { d < inf }) {
 				onsets = onsets.add(next);
 				next = next + this.prIntervallo(next, d);
 			} {
-				// silenzio: si riprova a passo fisso, legato al tempo e non alla finestra (continuità)
+				// silenzio (anche NaN): si riprova a passo fisso, legato al tempo e non alla finestra
 				next = next + silenceStep;
 			};
 		};
@@ -40,8 +43,8 @@ GrtScheduler {
 	prIntervallo { |t, densita|
 		var media = 1 / densita;
 		var grezza = distribution.value(t);
-		// fuori da 0..1 gli intervalli possono diventare negativi: si riporta nei limiti e si conta
-		var d = grezza.clip(0, 1);
+		// fuori da 0..1 gli intervalli possono diventare negativi, con NaN il cursore diventa NaN
+		var d = if(grezza.isNaN) { 0 } { grezza.clip(0, 1) };
 		if(d != grezza) { clamps = clamps + 1 };
 		^(1 - d) * media + (d * rng.next * 2 * media)
 	}

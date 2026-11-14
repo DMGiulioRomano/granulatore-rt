@@ -34,10 +34,17 @@ jobs:
       # (SCClassLibrary, scsynth, plugins) accanto all'eseguibile, in Contents/MacOS
       # (SC_Filesystem_macos.cpp, defaultResourceDirectory). Una copia in Contents/Resources
       # parte da dove le risorse ci sono davvero.
+      # La class library invece la action non la installa nell'app:
+      # si prende dal checkout da cui sclang e' stato compilato, che SCLANG_PATH contiene
+      # (<checkout>/build/Install/SuperCollider/SuperCollider.app/Contents/MacOS/sclang).
       - name: sclang accanto alle risorse
         run: |
           contents=$(dirname "$(dirname "$SCLANG_PATH")")
-          ls "$contents/MacOS" "$contents/MacOS/SCClassLibrary" || true
+          checkout=${SCLANG_PATH%/build/Install/*}
+          if [ ! -d "$contents/Resources/SCClassLibrary" ]; then
+            [ -d "$checkout/SCClassLibrary" ] || { echo "::error::SCClassLibrary non trovata in $checkout"; exit 1; }
+            cp -R "$checkout/SCClassLibrary" "$contents/Resources/"
+          fi
           cp "$SCLANG_PATH" "$contents/Resources/sclang"
           echo "SCLANG=$contents/Resources/sclang" >> "$GITHUB_ENV"
         env:

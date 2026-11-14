@@ -31,15 +31,20 @@ jobs:
         with:
           ref: Version-3.14.1
       # La build headless non viene riconosciuta come bundle: sclang cerca le risorse
-      # (SCClassLibrary, scsynth, plugins) accanto all'eseguibile, in Contents/MacOS.
-      # E la action non copia SCClassLibrary nell'app.
+      # (SCClassLibrary, scsynth, plugins) accanto all'eseguibile, in Contents/MacOS
       # (SC_Filesystem_macos.cpp, defaultResourceDirectory). Una copia in Contents/Resources
       # parte da dove le risorse ci sono davvero.
+      # La class library invece la action non la installa nell'app:
+      # si prende dal checkout da cui sclang e' stato compilato, che SCLANG_PATH contiene
+      # (<checkout>/build/Install/SuperCollider/SuperCollider.app/Contents/MacOS/sclang).
       - name: sclang accanto alle risorse
         run: |
           contents=$(dirname "$(dirname "$SCLANG_PATH")")
-          # la action non installa la class library nell'app: si prende dal sorgente
-          [ -d "$contents/Resources/SCClassLibrary" ] || cp -R /tmp/supercollider/SCClassLibrary "$contents/Resources/"
+          checkout=${SCLANG_PATH%/build/Install/*}
+          if [ ! -d "$contents/Resources/SCClassLibrary" ]; then
+            [ -d "$checkout/SCClassLibrary" ] || { echo "::error::SCClassLibrary non trovata in $checkout"; exit 1; }
+            cp -R "$checkout/SCClassLibrary" "$contents/Resources/"
+          fi
           cp "$SCLANG_PATH" "$contents/Resources/sclang"
           echo "SCLANG=$contents/Resources/sclang" >> "$GITHUB_ENV"
         env:
